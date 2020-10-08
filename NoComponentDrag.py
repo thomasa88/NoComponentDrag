@@ -1,5 +1,5 @@
 #Author-Thomas Axelsson
-#Description-Traces Command calls
+#Description-Blocks Component Dragging in parametric mode
 
 # This file is part of AnyShortcut, a Fusion 360 add-in for assigning
 # shortcuts to the last run commands.
@@ -32,7 +32,7 @@ import os
 import operator
 import time
 
-NAME = 'CommandTrace'
+NAME = 'NoComponentDrag'
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 # Import relative path to avoid namespace pollution
