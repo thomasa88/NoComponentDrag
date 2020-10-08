@@ -2,7 +2,7 @@
 
 A Fusion 360 add-in that adds a *Component Drag* option in the parametric design environment. It works just like the *Component Drag* option in the direct editing environment.
 
-
+![Screenshot](screenshot.png)
 
 ## Supported Platforms
 
@@ -19,7 +19,11 @@ Make sure the directory is named `NoComponentDrag`, with no suffix.
 
 ## Usage
 
-Select/unselect *Component Drag* in the Select dropdown.
+Select/unselect *Component Drag* in the Select dropdown to enable/disable component dragging in the parametric environment.
+
+The setting is remembered.
+
+The add-in can be temporarily disabled using the *Scripts and Add-ins* dialog. Press *Shift+S* in Fusion 360™ and go to the *Add-Ins* tab.
 
 ## Reporting Issues
 
@@ -43,5 +47,7 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
 
 ## Changelog
 
+* v 0.2.0
+  * Remember *Component Drag* setting
 * v 0.10
-  * First beta
+  * *Component Drag* menu option

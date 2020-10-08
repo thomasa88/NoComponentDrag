@@ -40,7 +40,7 @@ from .thomasa88lib import utils
 from .thomasa88lib import events
 from .thomasa88lib import manifest
 from .thomasa88lib import error
-from .thomasa88lib import timeline
+from .thomasa88lib import settings
 
 # Force modules to be fresh during development
 import importlib
@@ -48,7 +48,7 @@ importlib.reload(thomasa88lib.utils)
 importlib.reload(thomasa88lib.events)
 importlib.reload(thomasa88lib.manifest)
 importlib.reload(thomasa88lib.error)
-importlib.reload(thomasa88lib.timeline)
+importlib.reload(thomasa88lib.settings)
 
 ENABLE_CMD_ID = 'thomasa88_NoComponentDrag_Enable'
 SEPARATOR_ID = 'thomasa88_NoComponentDrag_SeparatorAfter'
@@ -58,22 +58,23 @@ ui_ = None
 error_catcher_ = thomasa88lib.error.ErrorCatcher()
 events_manager_ = thomasa88lib.events.EventsManager(error_catcher_)
 manifest_ = thomasa88lib.manifest.read()
+settings_ = thomasa88lib.settings.SettingsManager(
+    { 'drag_enabled': True }
+)
 
 enable_cmd_def_ = None
-drag_enabled_ = True
 right_environment_ = True
 
 def command_starting_handler(args: adsk.core.ApplicationCommandEventArgs):
-    if right_environment_ and not drag_enabled_ and args.commandId == 'FusionDragComponentsCommand':
+    if right_environment_ and not settings_['drag_enabled'] and args.commandId == 'FusionDragComponentsCommand':
         args.isCanceled = True
 
 def enable_cmd_created_handler(args: adsk.core.CommandCreatedEventArgs):
-    global drag_enabled_
     checkbox_def: adsk.core.CheckBoxControlDefinition = args.command.parentCommandDefinition.controlDefinition
     if checkbox_def.isChecked:
-        drag_enabled_ = True
+        settings_['drag_enabled'] = True
     else:
-        drag_enabled_ = False
+        settings_['drag_enabled'] = False
 
 def document_activated_handler(args: adsk.core.WorkspaceEventArgs):
     toggle_visibility()
@@ -109,7 +110,7 @@ def run(context):
                                                                  'Enables or disables the movement of components by dragging'
                                                                   'in the canvas.\n\n'
                                                                   f'({NAME} v {manifest_["version"]})',
-                                                                  True)
+                                                                  settings_['drag_enabled'])
         events_manager_.add_handler(enable_cmd_def_.commandCreated,
                                     callback=enable_cmd_created_handler)
 
