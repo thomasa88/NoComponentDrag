@@ -59,6 +59,8 @@ manifest_ = thomasa88lib.manifest.read()
 
 def command_starting_handler(args: adsk.core.ApplicationCommandEventArgs):
     print("START: ", args.commandId)
+    if args.commandId == 'FusionDragComponentsCommand':
+        args.isCanceled = True
 
 def command_created_handler(args: adsk.core.ApplicationCommandEventArgs):
     print("CREATE:", args.commandId)
