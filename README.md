@@ -47,6 +47,8 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
 
 ## Changelog
 
+* v 0.2.1
+  * Run on start-up by default
 * v 0.2.0
   * Remember *Component Drag* setting
 * v 0.10
