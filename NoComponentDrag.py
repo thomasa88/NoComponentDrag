@@ -142,6 +142,7 @@ def stop(context):
     with error_catcher_:
         events_manager_.clean_up()
 
+        panel_id = 'SelectPanel'
         panel = ui_.toolbarPanelsByProductType('DesignProductType').itemById(panel_id)
         old_control = panel.controls.itemById(ENABLE_CMD_ID)
         if old_control:
