@@ -47,6 +47,8 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
 
 ## Changelog
 
+* v 0.2.2
+  * Fix spelling mistake
 * v 0.2.1
   * Run on start-up by default
 * v 0.2.0

@@ -107,7 +107,7 @@ def run(context):
         # Use a Command to get a transaction when renaming
         enable_cmd_def_ = ui_.commandDefinitions.addCheckBoxDefinition(ENABLE_CMD_ID,
                                                                  f'Component Drag',
-                                                                 'Enables or disables the movement of components by dragging'
+                                                                 'Enables or disables the movement of components by dragging '
                                                                   'in the canvas.\n\n'
                                                                   f'({NAME} v {manifest_["version"]})',
                                                                   settings_['drag_enabled'])
