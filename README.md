@@ -50,7 +50,7 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
 
 ## Changelog
 
-* v 0.2.3
+* v 1.0.0
   * Unload correctly.
   * Handle user switching to/from Direct Edit mode.
   * Sync with with *Component Drag* in Direct Edit mode.
