@@ -25,6 +25,12 @@ The setting is remembered.
 
 The add-in can be temporarily disabled using the *Scripts and Add-ins* dialog. Press *Shift+S* in Fusion 360™ and go to the *Add-Ins* tab.
 
+## Known Limitations
+
+* The *Component Drag* option (Parametric) is not synchronized with the original Fusion 360™ *Component Drag* option (Direct Edit).
+* Disabling component drag does not allow for starting window selections on top of components, which is the case for the built-in *Component Drag* option.
+* Holding the *Alt* key does not temporarily enable component dragging.
+
 ## Reporting Issues
 
 Please report any issues that you find on the [Issues](https://github.com/thomasa88/NoComponentDrag/issues) page.
@@ -49,6 +55,7 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
 
 * v 0.2.3
   * Unload correctly.
+  * Handle user switching to/from Direct Edit mode.
 * v 0.2.2
   * Fix spelling mistake
 * v 0.2.1

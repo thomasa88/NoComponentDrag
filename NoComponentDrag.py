@@ -66,8 +66,15 @@ enable_cmd_def_ = None
 right_environment_ = True
 
 def command_starting_handler(args: adsk.core.ApplicationCommandEventArgs):
+    # Should we block?
     if right_environment_ and not settings_['drag_enabled'] and args.commandId == 'FusionDragComponentsCommand':
         args.isCanceled = True
+
+def command_terminated_handler(args: adsk.core.ApplicationCommandEventArgs):
+    # Detect if user toggles Direct Edit or enters/leaves a Base Feature
+    if (args.commandId in ('ConvertToPMDesignCommand', 'ConvertToDMDesignCommand', 'BaseFeatureActivate', 'BaseFeatureStop') and
+        args.terminationReason == adsk.core.CommandTerminationReason.CompletedTerminationReason):
+        check_environment()
 
 def enable_cmd_created_handler(args: adsk.core.CommandCreatedEventArgs):
     checkbox_def: adsk.core.CheckBoxControlDefinition = args.command.parentCommandDefinition.controlDefinition
@@ -77,20 +84,22 @@ def enable_cmd_created_handler(args: adsk.core.CommandCreatedEventArgs):
         settings_['drag_enabled'] = False
 
 def document_activated_handler(args: adsk.core.WorkspaceEventArgs):
-    toggle_visibility()
+    check_environment()
 
-def toggle_visibility():
+def check_environment():
     # Don't make a double command in the direct editing environment
     global enable_cmd_def_
     global right_environment_
     
-    show = False
+    right_environment_ = is_parametric_mode()
+    enable_cmd_def_.controlDefinition.isVisible = right_environment_
+
+def is_parametric_mode():
     if ui_.activeWorkspace.id == 'FusionSolidEnvironment':
         design: adsk.fusion.Design = app_.activeProduct
         if design.designType == adsk.fusion.DesignTypes.ParametricDesignType:
-            show = True
-    enable_cmd_def_.controlDefinition.isVisible = show
-    right_environment_ = show
+            return True
+    return False
 
 def run(context):
     global app_
@@ -128,6 +137,7 @@ def run(context):
         panel.controls.addSeparator(SEPARATOR_ID, ENABLE_CMD_ID, False)
 
         events_manager_.add_handler(ui_.commandStarting, callback=command_starting_handler)
+        events_manager_.add_handler(ui_.commandTerminated, callback=command_terminated_handler)
 
         # Fusion bug: DocumentActivated is not called when switching to/from Drawing.
         # https://forums.autodesk.com/t5/fusion-360-api-and-scripts/api-bug-application-documentactivated-event-do-not-raise/m-p/9020750
@@ -136,7 +146,7 @@ def run(context):
 
         # Workspace is not ready when starting (?)
         if app_.isStartupComplete:
-            toggle_visibility()
+            check_environment()
 
 def stop(context):
     with error_catcher_:
