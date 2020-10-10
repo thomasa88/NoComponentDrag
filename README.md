@@ -27,7 +27,6 @@ The add-in can be temporarily disabled using the *Scripts and Add-ins* dialog. P
 
 * Disabling component drag does not allow for starting window selections on top of components, which is the case for the built-in *Component Drag* option.
 * Holding the *Alt* key does not temporarily enable component dragging.
-* Select menu items are not updated correctly when going from the Drawing to the design environment. Due to [Fusion 360™ bug](https://forums.autodesk.com/t5/fusion-360-api-and-scripts/api-bug-application-documentactivated-event-do-not-raise/m-p/9020750).
 
 ## Reporting Issues
 
@@ -55,6 +54,7 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
   * Unload correctly.
   * Handle user switching to/from Direct Edit mode.
   * Sync with with *Component Drag* in Direct Edit mode.
+  * Workaround for [Fusion 360™ bug](https://forums.autodesk.com/t5/fusion-360-api-and-scripts/api-bug-application-documentactivated-event-do-not-raise/m-p/9020750) making select menu items not update correctly when going from the Drawing to the design environment
 * v 0.2.2
   * Fix spelling mistake
 * v 0.2.1

@@ -68,17 +68,19 @@ def command_starting_handler(args: adsk.core.ApplicationCommandEventArgs):
     if parametric_environment_ and args.commandId == 'FusionDragComponentsCommand' and not get_direct_edit_drag_enabled():
         args.isCanceled = True
 
-##### how is base feature handled normally?
-#### can we read/update the direct edit mode option when we check if we should be enabled?
-
 def command_terminated_handler(args: adsk.core.ApplicationCommandEventArgs):
     # Detect if user toggles Direct Edit or enters/leaves a Base Feature
     # Undo/Redo triggers the ActivateEnvironmentCommand instead.
-    if (args.commandId == 'ActivateEnvironmentCommand' or
+    # PLM360OpenAttachmentCommand, CurrentlyOpenDocumentsCommand are workarounds for DocumentActivated with Drawings bug.
+    # https://forums.autodesk.com/t5/fusion-360-api-and-scripts/api-bug-application-documentactivated-event-do-not-raise/m-p/9020750
+    if (args.commandId in ('ActivateEnvironmentCommand', 'PLM360OpenAttachmentCommand', 'CurrentlyOpenDocumentsCommand') or
         (args.terminationReason == adsk.core.CommandTerminationReason.CompletedTerminationReason and
          args.commandId in ('Undo', 'Redo','ConvertToPMDesignCommand', 'ConvertToDMDesignCommand',
                             'BaseFeatureActivate', 'BaseFeatureStop', 'BaseFeatureCreationCommand'))):
         check_environment()
+
+def document_activated_handler(args: adsk.core.WorkspaceEventArgs):
+    check_environment()
 
 def enable_cmd_created_handler(args: adsk.core.CommandCreatedEventArgs):
     global addin_updating_checkbox_
@@ -93,9 +95,6 @@ def set_direct_edit_drag_enabled(value):
 
 def get_direct_edit_drag_enabled():
     return fusion_drag_controls_cmd_def_.controlDefinition.isChecked
-
-def document_activated_handler(args: adsk.core.WorkspaceEventArgs):
-    check_environment()
 
 def check_environment():
     # Don't make a double command in the direct editing environment
