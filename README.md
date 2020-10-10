@@ -1,4 +1,4 @@
-# NoComponentDrag
+# ![](resources/logo/32x32.png)NoComponentDrag
 
 A Fusion 360 add-in that adds a *Component Drag* option in the parametric design environment. It works just like the *Component Drag* option in the direct editing environment.
 
