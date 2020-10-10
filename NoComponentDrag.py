@@ -40,7 +40,6 @@ from .thomasa88lib import utils
 from .thomasa88lib import events
 from .thomasa88lib import manifest
 from .thomasa88lib import error
-from .thomasa88lib import settings
 
 # Force modules to be fresh during development
 import importlib
@@ -48,40 +47,52 @@ importlib.reload(thomasa88lib.utils)
 importlib.reload(thomasa88lib.events)
 importlib.reload(thomasa88lib.manifest)
 importlib.reload(thomasa88lib.error)
-importlib.reload(thomasa88lib.settings)
 
 ENABLE_CMD_ID = 'thomasa88_NoComponentDrag_Enable'
-SEPARATOR_ID = 'thomasa88_NoComponentDrag_SeparatorAfter'
+DIRECT_EDIT_DRAG_CMD_ID = 'FusionDragCompControlsCmd'
 
 app_ = None
 ui_ = None
 error_catcher_ = thomasa88lib.error.ErrorCatcher()
 events_manager_ = thomasa88lib.events.EventsManager(error_catcher_)
 manifest_ = thomasa88lib.manifest.read()
-settings_ = thomasa88lib.settings.SettingsManager(
-    { 'drag_enabled': True }
-)
 
+select_panel_ = None
 enable_cmd_def_ = None
-right_environment_ = True
+parametric_environment_ = True
+addin_updating_checkbox_ = False
+fusion_drag_controls_cmd_def_ = None
 
 def command_starting_handler(args: adsk.core.ApplicationCommandEventArgs):
     # Should we block?
-    if right_environment_ and not settings_['drag_enabled'] and args.commandId == 'FusionDragComponentsCommand':
+    if parametric_environment_ and args.commandId == 'FusionDragComponentsCommand' and not get_direct_edit_drag_enabled():
         args.isCanceled = True
+
+##### how is base feature handled normally?
+#### can we read/update the direct edit mode option when we check if we should be enabled?
 
 def command_terminated_handler(args: adsk.core.ApplicationCommandEventArgs):
     # Detect if user toggles Direct Edit or enters/leaves a Base Feature
-    if (args.commandId in ('ConvertToPMDesignCommand', 'ConvertToDMDesignCommand', 'BaseFeatureActivate', 'BaseFeatureStop') and
-        args.terminationReason == adsk.core.CommandTerminationReason.CompletedTerminationReason):
+    # Undo/Redo triggers the ActivateEnvironmentCommand instead.
+    if (args.commandId == 'ActivateEnvironmentCommand' or
+        (args.terminationReason == adsk.core.CommandTerminationReason.CompletedTerminationReason and
+         args.commandId in ('Undo', 'Redo','ConvertToPMDesignCommand', 'ConvertToDMDesignCommand',
+                            'BaseFeatureActivate', 'BaseFeatureStop', 'BaseFeatureCreationCommand'))):
         check_environment()
 
 def enable_cmd_created_handler(args: adsk.core.CommandCreatedEventArgs):
+    global addin_updating_checkbox_
+    # Check if we are updating the checkbox programmatically, to avoid infite event recursion
+    if addin_updating_checkbox_:
+        return
     checkbox_def: adsk.core.CheckBoxControlDefinition = args.command.parentCommandDefinition.controlDefinition
-    if checkbox_def.isChecked:
-        settings_['drag_enabled'] = True
-    else:
-        settings_['drag_enabled'] = False
+    set_direct_edit_drag_enabled(checkbox_def.isChecked)
+
+def set_direct_edit_drag_enabled(value):
+    fusion_drag_controls_cmd_def_.controlDefinition.isChecked = value
+
+def get_direct_edit_drag_enabled():
+    return fusion_drag_controls_cmd_def_.controlDefinition.isChecked
 
 def document_activated_handler(args: adsk.core.WorkspaceEventArgs):
     check_environment()
@@ -89,10 +100,18 @@ def document_activated_handler(args: adsk.core.WorkspaceEventArgs):
 def check_environment():
     # Don't make a double command in the direct editing environment
     global enable_cmd_def_
-    global right_environment_
+    global parametric_environment_
     
-    right_environment_ = is_parametric_mode()
-    enable_cmd_def_.controlDefinition.isVisible = right_environment_
+    parametric_environment_ = is_parametric_mode()
+    enable_cmd_def_.controlDefinition.isVisible = parametric_environment_
+    def update():
+        global addin_updating_checkbox_
+        addin_updating_checkbox_ = True
+        enable_cmd_def_.controlDefinition.isChecked = get_direct_edit_drag_enabled()
+        addin_updating_checkbox_ = False
+    # Fusion crashes if we changed isChecked from (one of?) the event handlers,
+    # so we put the update at the end of the event queue.
+    events_manager_.delay(update)
 
 def is_parametric_mode():
     if ui_.activeWorkspace.id == 'FusionSolidEnvironment':
@@ -105,13 +124,21 @@ def run(context):
     global app_
     global ui_
     global enable_cmd_def_
+    global select_panel_
+    global fusion_drag_controls_cmd_def_
     with error_catcher_:
         app_ = adsk.core.Application.get()
         ui_ = app_.userInterface
 
+        fusion_drag_controls_cmd_def_ = ui_.commandDefinitions.itemById('FusionDragCompControlsCmd')
+
         enable_cmd_def_ = ui_.commandDefinitions.itemById(ENABLE_CMD_ID)
         if enable_cmd_def_:
             enable_cmd_def_.deleteMe()
+
+        # There are multiple select panels. Pick the right one
+        select_panel_ = ui_.toolbarPanelsByProductType('DesignProductType').itemById('SelectPanel')
+        enabled = get_direct_edit_drag_enabled()
 
         # Use a Command to get a transaction when renaming
         enable_cmd_def_ = ui_.commandDefinitions.addCheckBoxDefinition(ENABLE_CMD_ID,
@@ -119,22 +146,14 @@ def run(context):
                                                                  'Enables or disables the movement of components by dragging '
                                                                   'in the canvas.\n\n'
                                                                   f'({NAME} v {manifest_["version"]})',
-                                                                  settings_['drag_enabled'])
+                                                                  enabled)
         events_manager_.add_handler(enable_cmd_def_.commandCreated,
                                     callback=enable_cmd_created_handler)
 
-        panel_id = 'SelectPanel'
-        # There are multiple select panels. Pick the right one
-        panel = ui_.toolbarPanelsByProductType('DesignProductType').itemById(panel_id)
-        old_control = panel.controls.itemById(ENABLE_CMD_ID)
+        old_control = select_panel_.controls.itemById(ENABLE_CMD_ID)
         if old_control:
             old_control.deleteMe()
-        panel.controls.addCommand(enable_cmd_def_, 'SeparatorAfter_SelectionToolsDropDown', False)
-
-        old_control = panel.controls.itemById(SEPARATOR_ID)
-        if old_control:
-            old_control.deleteMe()
-        panel.controls.addSeparator(SEPARATOR_ID, ENABLE_CMD_ID, False)
+        select_panel_.controls.addCommand(enable_cmd_def_, DIRECT_EDIT_DRAG_CMD_ID, False)
 
         events_manager_.add_handler(ui_.commandStarting, callback=command_starting_handler)
         events_manager_.add_handler(ui_.commandTerminated, callback=command_terminated_handler)
@@ -152,12 +171,6 @@ def stop(context):
     with error_catcher_:
         events_manager_.clean_up()
 
-        panel_id = 'SelectPanel'
-        panel = ui_.toolbarPanelsByProductType('DesignProductType').itemById(panel_id)
-        old_control = panel.controls.itemById(ENABLE_CMD_ID)
-        if old_control:
-            old_control.deleteMe()
-
-        old_control = panel.controls.itemById(SEPARATOR_ID)
+        old_control = select_panel_.controls.itemById(ENABLE_CMD_ID)
         if old_control:
             old_control.deleteMe()

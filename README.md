@@ -21,15 +21,13 @@ Make sure the directory is named `NoComponentDrag`, with no suffix.
 
 Select/unselect *Component Drag* in the Select dropdown to enable/disable component dragging in the parametric environment.
 
-The setting is remembered.
-
 The add-in can be temporarily disabled using the *Scripts and Add-ins* dialog. Press *Shift+S* in Fusion 360™ and go to the *Add-Ins* tab.
 
 ## Known Limitations
 
-* The *Component Drag* option (Parametric) is not synchronized with the original Fusion 360™ *Component Drag* option (Direct Edit).
 * Disabling component drag does not allow for starting window selections on top of components, which is the case for the built-in *Component Drag* option.
 * Holding the *Alt* key does not temporarily enable component dragging.
+* Select menu items are not updated correctly when going from the Drawing to the design environment. Due to [Fusion 360™ bug](https://forums.autodesk.com/t5/fusion-360-api-and-scripts/api-bug-application-documentactivated-event-do-not-raise/m-p/9020750).
 
 ## Reporting Issues
 
@@ -56,6 +54,7 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
 * v 0.2.3
   * Unload correctly.
   * Handle user switching to/from Direct Edit mode.
+  * Sync with with *Component Drag* in Direct Edit mode.
 * v 0.2.2
   * Fix spelling mistake
 * v 0.2.1
