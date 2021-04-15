@@ -50,6 +50,8 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
 
 ## Changelog
 
+* v 1.0.1
+  * Fix for start-up error introduced by Fusion 360 v2.0.10032. Issue #2.
 * v 1.0.0
   * Unload correctly.
   * Handle user switching to/from Direct Edit mode.
