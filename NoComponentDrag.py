@@ -113,10 +113,15 @@ def check_environment():
     events_manager_.delay(update)
 
 def is_parametric_mode():
-    if ui_.activeWorkspace.id == 'FusionSolidEnvironment':
-        design: adsk.fusion.Design = app_.activeProduct
-        if design.designType == adsk.fusion.DesignTypes.ParametricDesignType:
-            return True
+    try:
+        # UserInterface.ActiveWorkspace throws when it is called from DocumentActivatedHandler
+        # during Fusion 360 start-up(?). Checking for app_.isStartupComplete does not help.
+        if ui_.activeWorkspace.id == 'FusionSolidEnvironment':
+            design = adsk.fusion.Design.cast(app_.activeProduct)
+            if design and design.designType == adsk.fusion.DesignTypes.ParametricDesignType:
+                return True
+    except:
+        pass
     return False
 
 def run(context):
@@ -165,6 +170,10 @@ def run(context):
         # Workspace is not ready when starting (?)
         if app_.isStartupComplete:
             check_environment()
+        
+        # Checking workspace type in DocumentActivated handler fails since Fusion 360 v2.0.10032
+        # Put a check at the end of the event queue instead.
+        events_manager_.delay(check_environment)
 
 def stop(context):
     with error_catcher_:
