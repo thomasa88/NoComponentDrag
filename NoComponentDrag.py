@@ -1,5 +1,5 @@
 #Author-Thomas Axelsson 
-#Contributions by ZXYNINE
+#Issue fix by ZXYNINE
 #Description-Blocks Component Dragging in parametric mode
 
 # This file is part of NoComponentDrag, a Fusion 360 add-in for blocking
@@ -64,7 +64,7 @@ parametric_environment_ = True
 addin_updating_checkbox_ = False
 fusion_drag_controls_cmd_def_ = None
 
-checking_enviroment_queued_ = False
+checking_environment_queued_ = False
 
 def command_starting_handler(args: adsk.core.ApplicationCommandEventArgs):
     # Should we block?
@@ -102,13 +102,13 @@ def get_direct_edit_drag_enabled():
     return fusion_drag_controls_cmd_def_.controlDefinition.isChecked
 
     # This function was found to be the source of the multiple calls of "enable_cmd_created_handler"
-    # I noticed the update was being delayed but multiple sources can call check_enviroment leading to multiple updated being queued sequentially causing debugging to be a nightmare
+    # I noticed the update was being delayed but multiple sources can call check_environment leading to multiple updated being queued sequentially causing debugging to be a nightmare
     # On stopping the multiple updates from queueing issue "NoComponentDrag breaks Insert -> Derive" was solved i assume because the final update was overriding the insert window
 def check_environment():
-    # If a check enviroment is already queued then skip adding another.
+    # If a check environment is already queued then skip adding another.
     # IMPORTANT: May need to add code that removes the last placed check env and places another at the end of the queue if anything is queued in between calls of check env if errors occur
-    global checking_enviroment_queued_
-    if not checking_enviroment_queued_:
+    global checking_environment_queued_
+    if not checking_environment_queued_:
         return
     # Don't make a double command in the direct editing environment
     global enable_cmd_def_
@@ -117,15 +117,15 @@ def check_environment():
     enable_cmd_def_.controlDefinition.isVisible = parametric_environment_
     def update():
         global addin_updating_checkbox_
-        global checking_enviroment_queued_
+        global checking_environment_queued_
         addin_updating_checkbox_ = True
         enable_cmd_def_.controlDefinition.isChecked = get_direct_edit_drag_enabled()
         addin_updating_checkbox_ = False
-        checking_enviroment_queued_ = False
+        checking_environment_queued_ = False
     # Fusion crashes if we changed isChecked from (one of?) the event handlers,
     # so we put the update at the end of the event queue.
     events_manager_.delay(update)
-    checking_enviroment_queued_ = True
+    checking_environment_queued_ = True
 
 def is_parametric_mode():
     try:
