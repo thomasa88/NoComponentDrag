@@ -27,7 +27,6 @@ The add-in can be temporarily disabled using the *Scripts and Add-ins* dialog. P
 
 * Disabling component drag does not allow for starting window selections on top of components, which is the case for the built-in *Component Drag* option.
 * Holding the *Alt* key does not temporarily enable component dragging.
-* *Insert -> Derive* does not work when the add-in is active (the other derive functions work). [Issue #1](https://github.com/thomasa88/NoComponentDrag/issues/1)
 
 ## Reporting Issues
 
