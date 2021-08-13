@@ -41,7 +41,7 @@ This add-in is created by Thomas Axelsson.
 
 ## Contributors
 
-"Insert -> Derive" Fix contributed by user ZXYNINE.
+"Insert -> Derive" Fix contributed by user [ZXYNINE](https://github.com/Zxynine).
 
 ## License
 
