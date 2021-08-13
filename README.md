@@ -39,6 +39,10 @@ For better support, please include the steps you performed and the result. Also 
 
 This add-in is created by Thomas Axelsson.
 
+## Contributors
+
+"Insert -> Derive" Fix contributed by user ZXYNINE.
+
 ## License
 
 This project is licensed under the terms of the MIT license. See [LICENSE](LICENSE).
@@ -51,6 +55,8 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
 
 ## Changelog
 
+* v 1.0.2
+  * Fix for "Insert -> Derive" missing the insert panel. Issue #1.
 * v 1.0.1
   * Fix for start-up error introduced by Fusion 360 v2.0.10032. Issue #2.
 * v 1.0.0
