@@ -1,5 +1,4 @@
-#Author-Thomas Axelsson 
-#Issue fix by ZXYNINE
+#Author-Thomas Axelsson, ZXYNINE
 #Description-Blocks Component Dragging in parametric mode
 
 # This file is part of NoComponentDrag, a Fusion 360 add-in for blocking
@@ -64,8 +63,6 @@ parametric_environment_ = True
 addin_updating_checkbox_ = False
 fusion_drag_controls_cmd_def_ = None
 
-checking_environment_queued_ = False
-
 def command_starting_handler(args: adsk.core.ApplicationCommandEventArgs):
     # Should we block?
     if parametric_environment_ and args.commandId == 'FusionDragComponentsCommand' and not get_direct_edit_drag_enabled():
@@ -82,50 +79,57 @@ def command_terminated_handler(args: adsk.core.ApplicationCommandEventArgs):
                             'BaseFeatureActivate', 'BaseFeatureStop', 'BaseFeatureCreationCommand'))):
         check_environment()
 
+# This handler is called three times per window switch and only two times when first
+# starting and only once when trying to insert a derive.
 def document_activated_handler(args: adsk.core.WorkspaceEventArgs):
     check_environment()
 
-    # Is called three times per window switch and only two times when first starting and only once when trying to insert a derive
-    # A msgbox was placed in and I noticed the insert window actually does open meaning the addon is removing it. the insert window dissapears after the return
 def enable_cmd_created_handler(args: adsk.core.CommandCreatedEventArgs):
     global addin_updating_checkbox_
-    # Check if we are updating the checkbox programmatically, to avoid infite event recursion
+    # Check if we are updating the checkbox programmatically, to avoid infinite event recursion
     if addin_updating_checkbox_:
         return
     checkbox_def: adsk.core.CheckBoxControlDefinition = args.command.parentCommandDefinition.controlDefinition
     set_direct_edit_drag_enabled(checkbox_def.isChecked)
 
 def set_direct_edit_drag_enabled(value):
+    '''Sets the Fusion's "Component Drag" checkbox to the given value'''
     fusion_drag_controls_cmd_def_.controlDefinition.isChecked = value
 
 def get_direct_edit_drag_enabled():
+    '''Gets the value of Fusion's "Component Drag" checkbox'''
     return fusion_drag_controls_cmd_def_.controlDefinition.isChecked
 
-    # This function was found to be the source of the multiple calls of "enable_cmd_created_handler"
-    # I noticed the update was being delayed but multiple sources can call check_environment leading to multiple updated being queued sequentially causing debugging to be a nightmare
-    # On stopping the multiple updates from queueing issue "NoComponentDrag breaks Insert -> Derive" was solved i assume because the final update was overriding the insert window
 def check_environment():
-    # If a check environment is already queued then skip adding another.
-    # IMPORTANT: May need to add code that removes the last placed check env and places another at the end of the queue if anything is queued in between calls of check env if errors occur
-    global checking_environment_queued_
-    if not checking_environment_queued_:
-        return
-    # Don't make a double command in the direct editing environment
     global enable_cmd_def_
     global parametric_environment_
-    parametric_environment_ = is_parametric_mode()
-    enable_cmd_def_.controlDefinition.isVisible = parametric_environment_
-    def update():
-        global addin_updating_checkbox_
-        global checking_environment_queued_
+    
+    is_parametric = is_parametric_mode()
+    if parametric_environment_ == is_parametric:
+        # Environment did not change
+        return
+    parametric_environment_ = is_parametric
+
+    # Hide/show our menu command to avoid showing to Component Drag menu items
+    # in direct edit mode (Our command + Fusion's command).
+    enable_cmd_def_.controlDefinition.isVisible = is_parametric
+
+    # We only need to update checkbox in parametric mode, as it will not be
+    # seen in direct edit mode.
+    if is_parametric and enable_cmd_def_.controlDefinition.isChecked != get_direct_edit_drag_enabled():
+        # Fusion crashes if we change isChecked from (one of?) the event handlers,
+        # so we put the update at the end of the event queue.
+        events_manager_.delay(update_checkbox)
+
+def update_checkbox():
+    global addin_updating_checkbox_
+    # Only set the checkbox value (triggering a command creation), if the
+    # direct edit value has actually changed
+    direct_edit_drag_enabled = get_direct_edit_drag_enabled()
+    if enable_cmd_def_.controlDefinition.isChecked != direct_edit_drag_enabled:
         addin_updating_checkbox_ = True
-        enable_cmd_def_.controlDefinition.isChecked = get_direct_edit_drag_enabled()
+        enable_cmd_def_.controlDefinition.isChecked = direct_edit_drag_enabled
         addin_updating_checkbox_ = False
-        checking_environment_queued_ = False
-    # Fusion crashes if we changed isChecked from (one of?) the event handlers,
-    # so we put the update at the end of the event queue.
-    events_manager_.delay(update)
-    checking_environment_queued_ = True
 
 def is_parametric_mode():
     try:
