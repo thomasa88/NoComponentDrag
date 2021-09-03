@@ -27,10 +27,7 @@
 import adsk.core, adsk.fusion, adsk.cam, traceback
 
 from collections import deque
-import math
-import os
-import operator
-import time
+import math, os, operator, time
 
 NAME = 'NoComponentDrag'
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -79,8 +76,6 @@ def command_terminated_handler(args: adsk.core.ApplicationCommandEventArgs):
                             'BaseFeatureActivate', 'BaseFeatureStop', 'BaseFeatureCreationCommand'))):
         check_environment()
 
-# This handler is called three times per window switch and only two times when first
-# starting and only once when trying to insert a derive.
 def document_activated_handler(args: adsk.core.WorkspaceEventArgs):
     check_environment()
 
@@ -92,13 +87,12 @@ def enable_cmd_created_handler(args: adsk.core.CommandCreatedEventArgs):
     checkbox_def: adsk.core.CheckBoxControlDefinition = args.command.parentCommandDefinition.controlDefinition
     set_direct_edit_drag_enabled(checkbox_def.isChecked)
 
-def set_direct_edit_drag_enabled(value):
-    '''Sets the Fusion's "Component Drag" checkbox to the given value'''
+# Functions as a getter and a setter for Fusion's "Component Drag" checkbox
+# Exploits a Null mutable object default to check if a user has input the optional argument
+def direct_edit_drag_enabled(value = {}):
+    if value is direct_edit_drag_enabled.__defaults__[0]:
+        return fusion_drag_controls_cmd_def_.controlDefinition.isChecked
     fusion_drag_controls_cmd_def_.controlDefinition.isChecked = value
-
-def get_direct_edit_drag_enabled():
-    '''Gets the value of Fusion's "Component Drag" checkbox'''
-    return fusion_drag_controls_cmd_def_.controlDefinition.isChecked
 
 def check_environment():
     global enable_cmd_def_
@@ -143,6 +137,10 @@ def is_parametric_mode():
         pass
     return False
 
+def cleanUiItem(item):
+    if item:
+        item.deleteMe()
+
 def run(context):
     global app_
     global ui_
@@ -155,9 +153,8 @@ def run(context):
 
         fusion_drag_controls_cmd_def_ = ui_.commandDefinitions.itemById('FusionDragCompControlsCmd')
 
-        enable_cmd_def_ = ui_.commandDefinitions.itemById(ENABLE_CMD_ID)
-        if enable_cmd_def_:
-            enable_cmd_def_.deleteMe()
+        # Removing enable_cmd_def
+        cleanUiItem(ui_.commandDefinitions.itemById(ENABLE_CMD_ID))
 
         # There are multiple select panels. Pick the right one
         select_panel_ = ui_.toolbarPanelsByProductType('DesignProductType').itemById('SelectPanel')
@@ -168,13 +165,12 @@ def run(context):
                                                                  f'Component Drag',
                                                                  'Enables or disables the movement of components by dragging '
                                                                   'in the canvas.\n\n'
-                                                                  f'({NAME} v {manifest_["version"]})',
+                                                                  f'({NAME} v {manifest_["version"]})\n',
                                                                   enabled)
         events_manager_.add_handler(enable_cmd_def_.commandCreated,
                                     callback=enable_cmd_created_handler)
-        old_control = select_panel_.controls.itemById(ENABLE_CMD_ID)
-        if old_control:
-            old_control.deleteMe()
+        # Removing the old control
+        cleanUiItem(select_panel_.controls.itemById(ENABLE_CMD_ID))
         select_panel_.controls.addCommand(enable_cmd_def_, DIRECT_EDIT_DRAG_CMD_ID, False)
 
         events_manager_.add_handler(ui_.commandStarting, callback=command_starting_handler)
@@ -197,6 +193,5 @@ def stop(context):
     with error_catcher_:
         events_manager_.clean_up()
 
-        old_control = select_panel_.controls.itemById(ENABLE_CMD_ID)
-        if old_control:
-            old_control.deleteMe()
+        # Removing the old control
+        cleanUiItem(select_panel_.controls.itemById(ENABLE_CMD_ID))
