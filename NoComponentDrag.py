@@ -25,18 +25,14 @@
 # SOFTWARE.
 
 import adsk.core, adsk.fusion, adsk.cam, traceback
-
-from collections import deque
 import math, os, operator, time
+from collections import deque
 
 NAME = 'NoComponentDrag'
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 # Import relative path to avoid namespace pollution
-from .thomasa88lib import utils
-from .thomasa88lib import events
-from .thomasa88lib import manifest
-from .thomasa88lib import error
+from .thomasa88lib import utils, events, manifest, error
 
 # Force modules to be fresh during development
 import importlib
@@ -87,16 +83,16 @@ def enable_cmd_created_handler(args: adsk.core.CommandCreatedEventArgs):
     checkbox_def: adsk.core.CheckBoxControlDefinition = args.command.parentCommandDefinition.controlDefinition
     set_direct_edit_drag_enabled(checkbox_def.isChecked)
 
-# Functions as a getter and a setter for Fusion's "Component Drag" checkbox
-# Exploits a Null mutable object default to check if a user has input the optional argument
-def direct_edit_drag_enabled(value = {}):
-    if value is direct_edit_drag_enabled.__defaults__[0]:
-        return fusion_drag_controls_cmd_def_.controlDefinition.isChecked
+def set_direct_edit_drag_enabled(value):
+    '''Sets the Fusion's "Component Drag" checkbox to the given value'''
     fusion_drag_controls_cmd_def_.controlDefinition.isChecked = value
 
+def get_direct_edit_drag_enabled():
+    '''Gets the value of Fusion's "Component Drag" checkbox'''
+    return fusion_drag_controls_cmd_def_.controlDefinition.isChecked
+
 def check_environment():
-    global enable_cmd_def_
-    global parametric_environment_
+    global enable_cmd_def_, parametric_environment_
     
     is_parametric = is_parametric_mode()
     if parametric_environment_ == is_parametric:
@@ -119,10 +115,10 @@ def update_checkbox():
     global addin_updating_checkbox_
     # Only set the checkbox value (triggering a command creation), if the
     # direct edit value has actually changed
-    direct_edit_drag_enabled = get_direct_edit_drag_enabled()
-    if enable_cmd_def_.controlDefinition.isChecked != direct_edit_drag_enabled:
+    direct_edit_drag_ = get_direct_edit_drag_enabled()
+    if enable_cmd_def_.controlDefinition.isChecked != direct_edit_drag_:
         addin_updating_checkbox_ = True
-        enable_cmd_def_.controlDefinition.isChecked = direct_edit_drag_enabled
+        enable_cmd_def_.controlDefinition.isChecked = direct_edit_drag_
         addin_updating_checkbox_ = False
 
 def is_parametric_mode():
@@ -137,24 +133,21 @@ def is_parametric_mode():
         pass
     return False
 
-def cleanUiItem(item):
+def clear_ui_item(item):
     if item:
         item.deleteMe()
 
 def run(context):
-    global app_
-    global ui_
-    global enable_cmd_def_
-    global select_panel_
-    global fusion_drag_controls_cmd_def_
+    #Expose global variables inside of function
+    global app_, ui_, enable_cmd_def_, select_panel_, fusion_drag_controls_cmd_def_
     with error_catcher_:
         app_ = adsk.core.Application.get()
         ui_ = app_.userInterface
 
         fusion_drag_controls_cmd_def_ = ui_.commandDefinitions.itemById('FusionDragCompControlsCmd')
 
-        # Removing enable_cmd_def
-        cleanUiItem(ui_.commandDefinitions.itemById(ENABLE_CMD_ID))
+        # Clearing any previous enable_cmd_def
+        clear_ui_item(ui_.commandDefinitions.itemById(ENABLE_CMD_ID))
 
         # There are multiple select panels. Pick the right one
         select_panel_ = ui_.toolbarPanelsByProductType('DesignProductType').itemById('SelectPanel')
@@ -170,7 +163,7 @@ def run(context):
         events_manager_.add_handler(enable_cmd_def_.commandCreated,
                                     callback=enable_cmd_created_handler)
         # Removing the old control
-        cleanUiItem(select_panel_.controls.itemById(ENABLE_CMD_ID))
+        clear_ui_item(select_panel_.controls.itemById(ENABLE_CMD_ID))
         select_panel_.controls.addCommand(enable_cmd_def_, DIRECT_EDIT_DRAG_CMD_ID, False)
 
         events_manager_.add_handler(ui_.commandStarting, callback=command_starting_handler)
@@ -194,4 +187,4 @@ def stop(context):
         events_manager_.clean_up()
 
         # Removing the old control
-        cleanUiItem(select_panel_.controls.itemById(ENABLE_CMD_ID))
+        clear_ui_item(select_panel_.controls.itemById(ENABLE_CMD_ID))
