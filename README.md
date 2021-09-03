@@ -27,7 +27,6 @@ The add-in can be temporarily disabled using the *Scripts and Add-ins* dialog. P
 
 * Disabling component drag does not allow for starting window selections on top of components, which is the case for the built-in *Component Drag* option.
 * Holding the *Alt* key does not temporarily enable component dragging.
-* *Insert -> Derive* does not work when the add-in is active (the other derive functions work). [Issue #1](https://github.com/thomasa88/NoComponentDrag/issues/1)
 
 ## Reporting Issues
 
@@ -38,6 +37,10 @@ For better support, please include the steps you performed and the result. Also 
 ## Author
 
 This add-in is created by Thomas Axelsson.
+
+## Contributors
+
+"Insert -> Derive" Fix contributed by user [ZXYNINE](https://github.com/Zxynine), and adapted.
 
 ## License
 
@@ -51,6 +54,9 @@ This project is licensed under the terms of the MIT license. See [LICENSE](LICEN
 
 ## Changelog
 
+* v 1.0.2
+  * Fix for "Insert -> Derive" missing the insert panel. Issue #1. Credits to [ZXYNINE](https://github.com/Zxynine) for locating the bug and providing an initial fix.
+  * Optimized synchronization of Direct Edit and Parametric mode drag options.
 * v 1.0.1
   * Fix for start-up error introduced by Fusion 360 v2.0.10032. Issue #2.
 * v 1.0.0
