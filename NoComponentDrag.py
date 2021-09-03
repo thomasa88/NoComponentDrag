@@ -71,7 +71,9 @@ def command_terminated_handler(args: adsk.core.ApplicationCommandEventArgs):
          args.commandId in ('Undo', 'Redo','ConvertToPMDesignCommand', 'ConvertToDMDesignCommand',
                             'BaseFeatureActivate', 'BaseFeatureStop', 'BaseFeatureCreationCommand'))):
         check_environment()
-
+        
+# This handler is called three times per window switch and only two times when first
+# starting and only once when trying to insert a derive.
 def document_activated_handler(args: adsk.core.WorkspaceEventArgs):
     check_environment()
 
