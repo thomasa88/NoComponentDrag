@@ -36,10 +36,12 @@ from .thomasa88lib import utils, events, manifest, error
 # To RE-import pre-referanced modules above the direct names can be used
 # VSCode intillesense does not like it if you do it with the directory (Gives not referenced error but still functions properly)
 import importlib
-importlib.reload(utils)
-importlib.reload(events)
-importlib.reload(manifest)
-importlib.reload(error)
+# Allows for re-import of multiple modules
+def ReImport_List(*args):
+	for module in args:
+		importlib.reload(module)
+ReImport_List(utils, events, manifest, error)
+
 
 NAME = 'NoComponentDrag'
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
