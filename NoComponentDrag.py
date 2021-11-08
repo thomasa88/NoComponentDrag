@@ -28,27 +28,28 @@ import adsk.core, adsk.fusion, adsk.cam, traceback
 import math, os, operator, time
 from collections import deque
 
-NAME = 'NoComponentDrag'
-FILE_DIR = os.path.dirname(os.path.realpath(__file__))
-
 # Import relative path to avoid namespace pollution
 from .thomasa88lib import utils, events, manifest, error
 
 # Force modules to be fresh during development
+# Does not need a "thomana88lib." before the module since import lib has-
+# To RE-import pre-referanced modules above the direct names can be used
+# VSCode intillesense does not like it if you do it with the directory (Gives not referenced error but still functions properly)
 import importlib
-importlib.reload(thomasa88lib.utils)
-importlib.reload(thomasa88lib.events)
-importlib.reload(thomasa88lib.manifest)
-importlib.reload(thomasa88lib.error)
+importlib.reload(utils)
+importlib.reload(events)
+importlib.reload(manifest)
+importlib.reload(error)
 
+NAME = 'NoComponentDrag'
+FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 ENABLE_CMD_ID = 'thomasa88_NoComponentDrag_Enable'
 DIRECT_EDIT_DRAG_CMD_ID = 'FusionDragCompControlsCmd'
 
-app_ = None
-ui_ = None
-error_catcher_ = thomasa88lib.error.ErrorCatcher()
-events_manager_ = thomasa88lib.events.EventsManager(error_catcher_)
-manifest_ = thomasa88lib.manifest.read()
+app_ = ui_ = None
+error_catcher_ = error.ErrorCatcher()
+events_manager_ = events.EventsManager(error_catcher_)
+manifest_ = manifest.read()
 
 select_panel_ = None
 enable_cmd_def_ = None
@@ -162,19 +163,18 @@ def run(context):
                                                                   'in the canvas.\n\n'
                                                                   f'({NAME} v {manifest_["version"]})\n',
                                                                   enabled)
-        events_manager_.add_handler(enable_cmd_def_.commandCreated,
-                                    callback=enable_cmd_created_handler)
-        # Removing the old control
+        # Removing the old control 
+        ## Does not need to come after the add handler it was infront of
         clear_ui_item(select_panel_.controls.itemById(ENABLE_CMD_ID))
         select_panel_.controls.addCommand(enable_cmd_def_, DIRECT_EDIT_DRAG_CMD_ID, False)
-
+        
+        ## This demonstrates a clear block of code with similarities allowing for better oganisation
+        events_manager_.add_handler(enable_cmd_def_.commandCreated, callback=enable_cmd_created_handler)
         events_manager_.add_handler(ui_.commandStarting, callback=command_starting_handler)
         events_manager_.add_handler(ui_.commandTerminated, callback=command_terminated_handler)
-
-        # Fusion bug: DocumentActivated is not called when switching to/from Drawing.
+        # Fusion bug: DocumentActivated is not called when switching to/from Drawing. ##Ugly big link :(
         # https://forums.autodesk.com/t5/fusion-360-api-and-scripts/api-bug-application-documentactivated-event-do-not-raise/m-p/9020750
-        events_manager_.add_handler(app_.documentActivated,
-                                    callback=document_activated_handler)
+        events_manager_.add_handler(app_.documentActivated, callback=document_activated_handler)
 
         # Workspace is not ready when starting (?)
         if app_.isStartupComplete:
